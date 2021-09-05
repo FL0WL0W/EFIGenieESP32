@@ -1,0 +1,3 @@
+[submodule "libs/EFIGenie"]
+	path = libs/EFIGenie
+	url = https://github.com/FL0WL0W/EFIGenie
