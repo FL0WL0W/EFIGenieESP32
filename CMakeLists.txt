@@ -43,6 +43,8 @@ add_executable(${CMAKE_PROJECT_NAME}.elf ${SOURCE_FILES})
 add_subdirectory (${LIBRARIES}/EFIGenie)
 target_link_libraries(${CMAKE_PROJECT_NAME}.elf EFIGenie)
 
+target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "tune.bin" BINARY)
+
 # Link the static libraries to the executable
 target_link_libraries(${CMAKE_PROJECT_NAME}.elf idf::esp32 idf::freertos idf::spi_flash idf::esp_adc_cal)
 # Attach additional targets to the executable file for flashing,
