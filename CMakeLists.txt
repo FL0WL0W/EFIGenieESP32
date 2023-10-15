@@ -1,55 +1,36 @@
-cmake_minimum_required ( VERSION 3.9 )
-project ( EFIGenie C CXX ASM )
+cmake_minimum_required ( VERSION 3.16 )
 
-add_definitions ( -DTARGET=esp32 )
-# Include for ESP-IDF build system functions
-include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
-# Create idf::esp32 and idf::freertos static libraries
-idf_build_process(esp32
-                # try and trim the build; additional components
-                # will be included as needed based on dependency tree
-                #
-                # although esptool_py does not generate static library,
-                # processing the component is needed for flashing related
-                # targets and file generation
-                COMPONENTS esp32 freertos esptool_py esp_adc_cal
-                SDKCONFIG ${CMAKE_CURRENT_LIST_DIR}/sdkconfig
-                BUILD_DIR ${CMAKE_BINARY_DIR})
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(EFIGenieESP32)
 
-set(LIBRARIES	libs)
+set(LIBRARIES libs)
 
 include_directories(include)
 include_directories(${LIBRARIES}/EFIGenie/libs/EmbeddedIOServices/HardwareAbstractions/Esp32Idf/include)
 
-file(GLOB_RECURSE USER_CSOURCES src/*.c)
-file(GLOB_RECURSE USER_CSOURCES_Templates src/*_template.c)
-IF(USER_CSOURCES_Templates)
-        list(REMOVE_ITEM USER_CSOURCES ${USER_CSOURCES_Templates})
+file(GLOB_RECURSE USER_CSRCS src/*.c)
+file(GLOB_RECURSE USER_CSRCS_Templates src/*_template.c)
+IF(USER_CSRCS_Templates)
+        list(REMOVE_ITEM USER_CSRCS ${USER_CSRCS_Templates})
 ENDIF()
-file(GLOB_RECURSE USER_CXXSOURCES src/*.cpp)
-file(GLOB_RECURSE USER_CXXSOURCES_Templates src/*_template.cpp)
-IF(USER_CXXSOURCES_Templates)
-        list(REMOVE_ITEM USER_CXXSOURCES ${USER_CXXSOURCES_Templates})
+file(GLOB_RECURSE USER_CXXSRCS src/*.cpp)
+file(GLOB_RECURSE USER_CXXSRCS_Templates src/*_template.cpp)
+IF(USER_CXXSRCS_Templates)
+        list(REMOVE_ITEM USER_CXXSRCS ${USER_CXXSRCS_Templates})
 ENDIF()
-file(GLOB_RECURSE EmbeddedIOService_SOURCES ${LIBRARIES}/EFIGenie/libs/EmbeddedIOServices/HardwareAbstractions/Esp32Idf/src/*.cpp)
-file(GLOB_RECURSE EmbeddedIOService_SOURCES_Templates ${LIBRARIES}/EFIGenie/libs/EmbeddedIOServices/HardwareAbstractions/Esp32Idf/src/*_template.cpp)
-IF(EmbeddedIOService_SOURCES_Templates)
-        list(REMOVE_ITEM EmbeddedIOService_SOURCES ${EmbeddedIOService_SOURCES_Templates})
+file(GLOB_RECURSE EmbeddedIOService_SRCS ${LIBRARIES}/EFIGenie/libs/EmbeddedIOServices/HardwareAbstractions/Esp32Idf/src/*.cpp)
+file(GLOB_RECURSE EmbeddedIOService_SRCS_Templates ${LIBRARIES}/EFIGenie/libs/EmbeddedIOServices/HardwareAbstractions/Esp32Idf/src/*_template.cpp)
+IF(EmbeddedIOService_SRCS_Templates)
+        list(REMOVE_ITEM EmbeddedIOService_SRCS ${EmbeddedIOService_SRCS_Templates})
 ENDIF()
 
-set(SOURCE_FILES ${USER_CSOURCES} ${USER_CXXSOURCES} ${EmbeddedIOService_SOURCES})
-add_executable(${CMAKE_PROJECT_NAME}.elf ${SOURCE_FILES})
+set(SRCS ${USER_CSRCS} ${USER_CXXSRCS} ${EmbeddedIOService_SRCS})
+target_sources(${CMAKE_PROJECT_NAME}.elf PUBLIC ${SRCS})
 
 add_subdirectory (${LIBRARIES}/EFIGenie)
-target_link_libraries(${CMAKE_PROJECT_NAME}.elf EFIGenie)
+target_link_libraries(${CMAKE_PROJECT_NAME}.elf PUBLIC EFIGenie)
 
 target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "tune.bin" BINARY)
-
-# Link the static libraries to the executable
-target_link_libraries(${CMAKE_PROJECT_NAME}.elf idf::esp32 idf::freertos idf::spi_flash idf::esp_adc_cal)
-# Attach additional targets to the executable file for flashing,
-# linker script generation, partition_table generation, etc.
-idf_build_executable(${CMAKE_PROJECT_NAME}.elf)
 
 # set(HEX_FILE ${PROJECT_SOURCE_DIR}/build/firmware.hex)
 # set(BIN_FILE ${PROJECT_SOURCE_DIR}/build/firmware.bin)

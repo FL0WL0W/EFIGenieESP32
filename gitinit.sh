@@ -1,5 +1,5 @@
 git submodule init
 git submodule update
-cd libs/EFIGenie
+cd main/libs/EFIGenie
 git submodule init
 git submodule update
