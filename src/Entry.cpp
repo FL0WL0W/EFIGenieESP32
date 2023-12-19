@@ -9,6 +9,9 @@
 #include "Config.h"
 #include "CommunicationHandler_Prefix.h"
 #include "CommunicationHandlers/CommunicationHandler_GetVariable.h"
+#include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 using namespace OperationArchitecture;
 using namespace EmbeddedIOServices;
@@ -62,11 +65,11 @@ extern "C"
 
     _embeddedIOServiceCollection.DigitalService = new Esp32IdfDigitalService();
     _embeddedIOServiceCollection.AnalogService = new Esp32IdfAnalogService(ADC_ATTEN_DB_11);
-    // _embeddedIOServiceCollection.TimerService = new Esp32IdfTimerService(TIMER_GROUP_1, TIMER_0);
+    _embeddedIOServiceCollection.TimerService = new Esp32IdfTimerService();
     // _embeddedIOServiceCollection.PwmService = new Esp32IdfPwmService();
 
 		size_t _configSize = 0;
-    _engineMain = new EFIGenieMain(reinterpret_cast<void*>(&_config), _configSize, &_embeddedIOServiceCollection, _variableMap);
+    _engineMain = new EFIGenieMain(reinterpret_cast<void*>(_config), _configSize, &_embeddedIOServiceCollection, _variableMap);
 
     _metadata = Config::OffsetConfig(&_config, *reinterpret_cast<const uint32_t *>(&_config) + 8);
     _getVariableHandler = new CommunicationHandler_GetVariable(_variableMap);
@@ -160,22 +163,27 @@ extern "C"
     prev = now;
     // _cdcService->Flush();
 
-    if(_engineMain != 0)
+    if(_engineMain != 0) {
       _engineMain->Loop();
+    }
   }
-    void esp_startup_start_app_other_cores(void)
-    {
-        _config = reinterpret_cast<char *>(malloc(tune_bytes));
-        std::memcpy(_config, tune_start, tune_bytes);
+  void app_main1(void)
+  {
+    esp_rom_delay_us(100000);
+      _config = reinterpret_cast<char *>(calloc(tune_bytes, sizeof(char)));
+      std::memcpy(_config, tune_start, tune_bytes);
 
-        Setup();
-        while (1)
-        {
-            Loop();
-        }
+      Setup();
+      while (1)
+      {
+          Loop();
+          esp_rom_delay_us(5000);
+      }
+  }
+  void app_main()
+  {
+    while(1) {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
-    void app_main()
-    {
-      //rtos app
-    }
+  }
 }
